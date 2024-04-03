@@ -1,0 +1,78 @@
+server:
+  port: 8763
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: git
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/umitcoban/medsoft-config.git
+          force-pull: true
+          skipSslValidation: true
+          default-label: main
+          timeout: 20
+          clone-on-start: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+          include: "*"
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    shutdown:
+      enabled: true
+    health:
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+opentelemetry:
+  otel:
+    exporter:
+      otlp:
+        trace:
+          endpoint: "http://tempo:4317" # Tempo için gRPC endpointi (HTTP protokolü kullanılsa bile gRPC portunu belirtin)
+          protocol: "grpc" # Tempo için iz gönderimi protokolü olarak gRPC'yi kullanın
+        metrics:
+          endpoint: "http://prometheus:9090" # Prometheus için HTTP endpointi
+        logs:
+          endpoint: "http://loki:3100/loki/api/v1/push" # Loki için HTTP endpointi
+    resource:
+      attributes: service.name=${spring.application.name}
+    propagators: tracecontext,baggage
+
+
+info:
+  app:
+    name: "config-server"
+    description: "MedSoft Config Server Application"
+    version: "1.0.0"
+
+endpoints:
+  shutdown:
+    enabled: true
+
+logging:
+  level:
+    com:
+      umitcoban:
+        configserver: DEBUG
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+
+
+
