@@ -1,6 +1,11 @@
 /target/
 !.mvn/wrapper/maven-wrapper.jar
 
+### DB DATA ###
+docker-compose/default/account_db/
+docker-compose/default/postgres/
+
+
 ### STS ###
 .apt_generated
 .classpath
