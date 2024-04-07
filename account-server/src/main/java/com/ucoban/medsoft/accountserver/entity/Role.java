@@ -16,13 +16,18 @@ public class Role extends BaseEntity {
     private long id;
     @Enumerated(EnumType.STRING)
     private ERole role;
-    @ManyToMany(mappedBy = "roles")
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
     private Set<Account> accounts;
+
+    public Role(ERole role) {
+        this.role = role;
+    }
 
     public Role(long id, ERole role) {
         this.id = id;
         this.role = role;
     }
+
     public Role() {
     }
 

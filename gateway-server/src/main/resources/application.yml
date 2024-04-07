@@ -5,11 +5,13 @@ spring:
     name: gatewayserver
   config:
     import: "optional:configserver:http://localhost:8763/"
+  profiles:
+    active: "local"
   cloud:
     gateway:
       discovery:
         locator:
-          enabled: false
+          enabled: true
           lowerCaseServiceId: true
       httpclient:
         connect-timeout: 1000
@@ -19,6 +21,7 @@ spring:
         resourceserver:
           jwt:
             jwk-set-uri: "http://localhost:7080/realms/master/protocol/openid-connect/certs"
+            issuer-uri: "http://localhost:7080/realms/master" # Add this line
 
 management:
   endpoints:
@@ -43,3 +46,8 @@ eureka:
     fetchRegistry: true
     serviceUrl:
       defaultZone: "http://localhost:8761/eureka/"
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.servlet.DispatcherServlet: DEBUG

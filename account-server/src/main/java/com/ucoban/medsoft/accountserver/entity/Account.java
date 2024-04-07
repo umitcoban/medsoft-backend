@@ -2,6 +2,8 @@ package com.ucoban.medsoft.accountserver.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -18,6 +20,11 @@ public class Account extends BaseEntity {
     private String email;
     @Column(nullable = false)
     private String phone;
+    private LocalDate birthDate;
+    @Column(columnDefinition = "DEFAULT 0")
+    private double weight = 0.;
+    @Column(columnDefinition = "DEFAULT 0")
+    private short height = 0;
     @ManyToMany(cascade = CascadeType.ALL, targetEntity = Role.class)
     @JoinTable(name = "account_roles", joinColumns = @JoinColumn(name = "account_id", nullable = false), inverseJoinColumns = @JoinColumn(name = "role_id", nullable = false))
     private Set<Role> roles;
@@ -28,6 +35,18 @@ public class Account extends BaseEntity {
         this.lastName = lastName;
         this.email = email;
         this.phone = phone;
+    }
+
+    public Account(String id, String firstName, String lastName, String email, String phone, LocalDate birthDate, double weight, short height, Set<Role> roles) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.birthDate = birthDate;
+        this.weight = weight;
+        this.height = height;
+        this.roles = roles;
     }
 
     public Account() {
@@ -79,6 +98,34 @@ public class Account extends BaseEntity {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public int getAge(){
+        return LocalDate.now().getYear() - birthDate.getYear();
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
+
+    public short getHeight() {
+        return height;
+    }
+
+    public void setHeight(short height) {
+        this.height = height;
     }
 
     @Override

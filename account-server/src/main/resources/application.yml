@@ -70,3 +70,11 @@ logging:
   pattern:
     level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
 
+keycloak-admin:
+  server-url: "http://localhost:7080"
+  realm: "master"
+  client-id: "medsoft-account-ms"
+  client-secret: "jgN04IAR9dpWhkNzDhn0eriSFRjzL1na"
+  admin-user: "admin"
+  admin-password: "admin"
+
