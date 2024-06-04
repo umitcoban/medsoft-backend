@@ -1,5 +1,6 @@
 package com.ucoban.medsoft.accountserver.controller;
 
+import com.ucoban.medsoft.accountserver.dao.client.IDocumentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
 import com.ucoban.medsoft.accountserver.dto.AccountDto;
 import com.ucoban.medsoft.accountserver.dto.ApiResponseDto;
@@ -26,9 +27,15 @@ public class AccountController {
 
     private final Logger logger = LoggerFactory.getLogger(AccountController.class);
 
-    public AccountController(@Qualifier("accountServiceImpl") IAccountService accountService, IAccountMapper accountMapper) {
+    private final IDocumentFeignClient documentFeignClient;
+
+    public AccountController(
+            @Qualifier("accountServiceImpl") IAccountService accountService,
+            IAccountMapper accountMapper,
+            IDocumentFeignClient documentFeignClient) {
         this.accountService = accountService;
         this.accountMapper = accountMapper;
+        this.documentFeignClient = documentFeignClient;
     }
 
     @PostMapping()
@@ -41,14 +48,15 @@ public class AccountController {
     public ResponseEntity<ApiResponseDto<AccountDto>> updateAccount(@Valid @RequestBody UpdateDto updateDto, @RequestHeader() HttpHeaders headers){
         var userId = headers.getFirst("user-id");
         logger.info("userID: {}", userId);
-        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountMapper.accountDtoToAccount(accountService.update(updateDto, userId)), HttpStatus.CREATED.value()));
+        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountMapper.accountDtoToAccount(accountService.update(updateDto, userId), documentFeignClient), HttpStatus.CREATED.value()));
     }
 
     @GetMapping("/findAccountById")
     public ResponseEntity<ApiResponseDto<AccountDto>> getAccount(@RequestHeader() HttpHeaders headers) {
         var userId = headers.getFirst("user-id");
-        logger.info("userID: {}", userId);
-        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountMapper.accountDtoToAccount(accountService.findById(userId)), HttpStatus.FOUND.value()));
+        logger.info("userID: {}", userId);;
+        var accountDto = accountMapper.accountDtoToAccount(accountService.findById(userId), documentFeignClient);
+        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountDto , HttpStatus.FOUND.value()));
     }
 
     @GetMapping("/findAllAccount")

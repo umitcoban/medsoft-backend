@@ -14,6 +14,7 @@ public record AccountDto(String id,
                          short height,
                          int age,
                          Set<RoleDto> roles,
+                         String photo,
                          LocalDateTime createdAt,
                          LocalDateTime updatedAt) {
 }

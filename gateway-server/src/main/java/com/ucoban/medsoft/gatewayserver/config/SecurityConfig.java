@@ -40,7 +40,9 @@ public class SecurityConfig {
                         exchanges
                                 .pathMatchers(HttpMethod.POST, "/medsoft/accounts/api").permitAll()
                                 .pathMatchers("/medsoft/accounts/api/findAllAccount").hasAnyRole("ADMIN")
-                                .pathMatchers("/medsoft/accounts/api/**").authenticated())
+                                .pathMatchers("/medsoft/accounts/api/analytics/**").hasAnyRole("ADMIN")
+                                .pathMatchers("/medsoft/accounts/api/**").authenticated()
+                                .pathMatchers("/medsoft/documents/api/**").authenticated())
                 .oauth2ResourceServer(oAuth2ResourceServerSpec -> oAuth2ResourceServerSpec
                         .jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(grantedAuthoritiesExtractor())));
         serverHttpSecurity.csrf(ServerHttpSecurity.CsrfSpec::disable);

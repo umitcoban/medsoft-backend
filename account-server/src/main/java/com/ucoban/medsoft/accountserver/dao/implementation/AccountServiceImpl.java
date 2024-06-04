@@ -1,7 +1,9 @@
 package com.ucoban.medsoft.accountserver.dao.implementation;
 
+import com.ucoban.medsoft.accountserver.dao.client.IDocumentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
 import com.ucoban.medsoft.accountserver.dao.service.IKeyCloakService;
+import com.ucoban.medsoft.accountserver.dto.AccountAnalyticsDto;
 import com.ucoban.medsoft.accountserver.dto.RegisterDto;
 import com.ucoban.medsoft.accountserver.dto.UpdateDto;
 import com.ucoban.medsoft.accountserver.entity.Account;
@@ -10,19 +12,19 @@ import com.ucoban.medsoft.accountserver.entity.Role;
 import com.ucoban.medsoft.accountserver.mapper.IAccountMapper;
 import com.ucoban.medsoft.accountserver.repository.IAccountRepository;
 import jakarta.transaction.Transactional;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Service
+@Service("accountServiceImpl")
 public class AccountServiceImpl implements IAccountService {
     @Value("${keycloak-admin.client-id}")
     private String clientId;
@@ -35,7 +37,11 @@ public class AccountServiceImpl implements IAccountService {
 
     private final Logger logger = LoggerFactory.getLogger(AccountServiceImpl.class);
 
-    public AccountServiceImpl(IAccountRepository accountRepository, @Qualifier("keyCloakServiceImpl") IKeyCloakService keyCloakService, IAccountMapper accountMapper) {
+    @Autowired
+    public AccountServiceImpl(
+            IAccountRepository accountRepository,
+                              @Qualifier("keyCloakServiceImpl") IKeyCloakService keyCloakService,
+           IAccountMapper accountMapper) {
         this.accountRepository = accountRepository;
         this.keyCloakService = keyCloakService;
         this.accountMapper = accountMapper;
@@ -81,9 +87,16 @@ public class AccountServiceImpl implements IAccountService {
             account.setFirstName(updateDto.firstName());
             account.setLastName(updateDto.lastName());
             account.setPhone(updateDto.phone());
-            return account;
+            return accountRepository.save(account);
         }
         throw new RuntimeException();
+    }
+
+    @Override
+    public AccountAnalyticsDto findAccountsAnalyticsDto() {
+        var accountWithRolesCount = accountRepository.findAccountRoleAndCounts();
+        var accountsCountWithDate = accountRepository.findAccountCountWithDate().stream().map(v -> Pair.of((Long) v[0], (Date) v[1])).toList();
+        return new AccountAnalyticsDto(accountWithRolesCount, accountsCountWithDate);
     }
 
     @Transactional

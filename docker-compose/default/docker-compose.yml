@@ -90,6 +90,48 @@ services:
     networks:
       - umitcoban
 
+  document-mongo-db:
+    container_name: document-db
+    image: mongo:8.0.0-rc4
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: "echo 'db.runCommand({ping: 1})' | mongo --quiet"
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    networks:
+      - umitcoban
+
+  document-server:
+    container_name: document-server
+    image: umitcoban/document-server:1.0.0
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_RABBITMQ_HOST: "rabbit"
+      SPRING_DATA_MONGODB_HOST: "document-mongo-db"  # MongoDB bağlantısı için gerekli değişkenler
+      SPRING_DATA_MONGODB_PORT: 27017  # MongoDB bağlantısı için gerekli değişkenler
+      SPRING_DATA_MONGODB_DATABASE: "medsoft-document"  # MongoDB bağlantısı için gerekli değişkenler
+      SPRING_DATA_MONGODB_USERNAME: "admin"  # MongoDB bağlantısı için gerekli değişkenler
+      SPRING_DATA_MONGODB_PASSWORD: "password"  # MongoDB bağlantısı için gerekli değişkenler
+    ports:
+      - "8445:8445"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      document-mongo-db:
+        condition: service_healthy
+
+    networks:
+      - umitcoban
+
   key-cloak-db:
     container_name: key-cloak-db
     image: postgres:16.0

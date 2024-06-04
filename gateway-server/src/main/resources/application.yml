@@ -14,8 +14,8 @@ spring:
           enabled: true
           lowerCaseServiceId: true
       httpclient:
-        connect-timeout: 1000
-        response-timeout: 10s
+        connect-timeout: 100000
+        response-timeout: 50s
     security:
       oauth2:
         resourceserver:

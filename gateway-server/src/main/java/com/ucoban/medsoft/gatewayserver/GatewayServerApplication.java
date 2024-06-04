@@ -22,11 +22,16 @@ public class GatewayServerApplication {
         SpringApplication.run(GatewayServerApplication.class, args);
     }
 
-    @Bean
-    RouteLocator routeLocator(RouteLocatorBuilder routeLocatorBuilder){
 
+    @Bean
+    RouteLocator routeLocator(RouteLocatorBuilder routeLocatorBuilder) {
         return routeLocatorBuilder.routes()
-                .route(p -> p.path("/medsoft/accounts/**").filters(f -> f.rewritePath("/medsoft/accounts/(?<segment>.*)", "/${segment}")).uri("lb://ACCOUNTMS"))
+                .route(p -> p.path("/medsoft/accounts/**")
+                        .filters(f -> f.rewritePath("/medsoft/accounts/(?<segment>.*)", "/${segment}"))
+                        .uri("lb://ACCOUNTMS"))
+                .route(p -> p.path("/medsoft/documents/**")
+                        .filters(f -> f.rewritePath("/medsoft/documents/(?<segment>.*)", "/${segment}"))
+                        .uri("lb://DOCUMENTMS"))
                 .build();
     }
 
@@ -40,14 +45,14 @@ public class GatewayServerApplication {
     @Bean
     public GlobalFilter customFilter() {
         return (exchange, chain) -> exchange.getPrincipal()
-                .map(principal -> {
+                .flatMap(principal -> {
                     if (principal instanceof JwtAuthenticationToken jwtAuth) {
                         String userId = (String) jwtAuth.getTokenAttributes().get("sub");
-                        System.out.println(jwtAuth.getTokenAttributes());
                         exchange.getRequest().mutate().header("user-id", userId).build();
                     }
-                    return exchange;
-                }).then(chain.filter(exchange));
+                    return Mono.just(exchange);
+                })
+                .flatMap(chain::filter);
     }
 
 }

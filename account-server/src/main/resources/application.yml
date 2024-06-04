@@ -24,6 +24,7 @@ spring:
     username: guest
     password: guest
     connection-timeout: 10s
+
 management:
   endpoints:
     web:
