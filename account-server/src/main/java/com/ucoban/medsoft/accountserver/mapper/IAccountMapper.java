@@ -7,10 +7,8 @@ import com.ucoban.medsoft.accountserver.dto.UpdateDto;
 import com.ucoban.medsoft.accountserver.entity.Account;
 import org.mapstruct.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 

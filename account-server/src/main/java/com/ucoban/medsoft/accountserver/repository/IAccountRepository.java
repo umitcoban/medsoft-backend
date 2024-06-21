@@ -2,9 +2,14 @@ package com.ucoban.medsoft.accountserver.repository;
 
 
 import com.ucoban.medsoft.accountserver.entity.Account;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 import java.util.Map;
 
@@ -17,4 +22,7 @@ public interface IAccountRepository extends JpaRepository<Account, String> {
     @Query(value = "select count(*), DATE(created_at) as date from accounts group by DATE(created_at)", nativeQuery = true)
     List<Object[]> findAccountCountWithDate();
 
+    Page<Account> findAll(Pageable pageable);
+
+    List<Account> findAll(Sort sort);
 }

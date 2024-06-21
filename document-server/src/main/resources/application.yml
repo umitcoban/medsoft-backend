@@ -30,13 +30,18 @@ management:
     web:
       exposure:
         include: "*"
-  endpoint:
-    gateway:
+  health:
+    readiness-state:
       enabled: true
-  info:
-    env:
+    liveness-state:
+      enabled: true
+  endpoint:
+    prometheus:
       enabled: true
   metrics:
+    export:
+      prometheus:
+        enabled: true
     tags:
       application: ${spring.application.name}
 

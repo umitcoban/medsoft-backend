@@ -4,6 +4,7 @@ import com.ucoban.medsoft.accountserver.dao.client.IDocumentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
 import com.ucoban.medsoft.accountserver.dao.service.IKeyCloakService;
 import com.ucoban.medsoft.accountserver.dto.AccountAnalyticsDto;
+import com.ucoban.medsoft.accountserver.dto.AccountDto;
 import com.ucoban.medsoft.accountserver.dto.RegisterDto;
 import com.ucoban.medsoft.accountserver.dto.UpdateDto;
 import com.ucoban.medsoft.accountserver.entity.Account;
@@ -19,6 +20,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +30,7 @@ import java.util.*;
 
 @Service("accountServiceImpl")
 public class AccountServiceImpl implements IAccountService {
+    private final IDocumentFeignClient iDocumentFeignClient;
     @Value("${keycloak-admin.client-id}")
     private String clientId;
 
@@ -40,11 +45,12 @@ public class AccountServiceImpl implements IAccountService {
     @Autowired
     public AccountServiceImpl(
             IAccountRepository accountRepository,
-                              @Qualifier("keyCloakServiceImpl") IKeyCloakService keyCloakService,
-           IAccountMapper accountMapper) {
+            @Qualifier("keyCloakServiceImpl") IKeyCloakService keyCloakService,
+            IAccountMapper accountMapper, IDocumentFeignClient iDocumentFeignClient) {
         this.accountRepository = accountRepository;
         this.keyCloakService = keyCloakService;
         this.accountMapper = accountMapper;
+        this.iDocumentFeignClient = iDocumentFeignClient;
     }
 
     @Override
@@ -126,5 +132,16 @@ public class AccountServiceImpl implements IAccountService {
         logger.info("keyCloakUser clientLevel {}", keyCloakUser.roles().clientLevel(client.getId()).listAll());
         keyCloakUser.roles().clientLevel(client.getId()).add(List.of(userRole));
         return keyCloakUserId;
+    }
+
+    @Override
+    public Page<AccountDto> findAll(Pageable pageable) {
+        Page<Account> accounts = accountRepository.findAll(pageable);
+        return accounts.map(acc -> accountMapper.accountDtoToAccount(acc, iDocumentFeignClient));
+    }
+
+    @Override
+    public List<AccountDto> findAll(Sort sort) {
+        return List.of();
     }
 }

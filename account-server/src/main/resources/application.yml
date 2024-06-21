@@ -36,17 +36,16 @@ management:
     liveness-state:
       enabled: true
   endpoint:
-    shutdown:
-      enabled: true
-    health:
-      probes:
-        enabled: true
-  info:
-    env:
+    prometheus:
       enabled: true
   metrics:
+    export:
+      prometheus:
+        enabled: true
     tags:
       application: ${spring.application.name}
+
+
 eureka:
   instance:
     preferIpAddress: true

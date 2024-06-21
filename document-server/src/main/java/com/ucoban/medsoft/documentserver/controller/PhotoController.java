@@ -25,14 +25,20 @@ public class PhotoController {
     @PostMapping("/profile")
     public ResponseEntity<ApiResponseDto<String>> createProfilePhoto(@RequestParam("file") MultipartFile file, @RequestParam("userId") @Validated String userId ) throws IOException {
         var id = profilePhotoService.save(file, userId);
-        var image = Base64.getEncoder().encodeToString(profilePhotoService.findById(id).getImage().getData());
+        var image = Base64.getEncoder().encodeToString(profilePhotoService.findByUserId(userId).getImage().getData());
         return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), image, System.currentTimeMillis()));
     }
 
     @GetMapping("/profile/{userId}")
     public ResponseEntity<ApiResponseDto<String>> getUserProfilPhoto(@PathVariable("userId") String userId ) throws IOException {
-        var image = Base64.getEncoder().encodeToString(profilePhotoService.findById(userId).getImage().getData());
+        var image = Base64.getEncoder().encodeToString(profilePhotoService.findByUserId(userId).getImage().getData());
         return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), image, System.currentTimeMillis()));
+    }
+
+    @DeleteMapping("/profile/{userId}")
+    public ResponseEntity<ApiResponseDto<Boolean>> deleteUserProfilPhoto(@PathVariable("userId") String userId ) throws IOException {
+        profilePhotoService.deletePhotoByUserId(userId);
+        return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), true, System.currentTimeMillis()));
     }
 
 }

@@ -76,8 +76,10 @@ services:
       SPRING_DATASOURCE_URL: "jdbc:postgresql://account-db:5432/account_db"
       SPRING_DATASOURCE_USERNAME: "account"
       SPRING_DATASOURCE_PASSWORD: "account"
-      SPRING_RABBITMQ_HOST: "rabbit"
+      SPRING_RABBITMQ_HOST: "rabbitmq"
       SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
     ports:
       - "8440:8440"
     depends_on:
@@ -114,11 +116,13 @@ services:
     environment:
       SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
       SPRING_RABBITMQ_HOST: "rabbit"
-      SPRING_DATA_MONGODB_HOST: "document-mongo-db"  # MongoDB bağlantısı için gerekli değişkenler
-      SPRING_DATA_MONGODB_PORT: 27017  # MongoDB bağlantısı için gerekli değişkenler
-      SPRING_DATA_MONGODB_DATABASE: "medsoft-document"  # MongoDB bağlantısı için gerekli değişkenler
-      SPRING_DATA_MONGODB_USERNAME: "admin"  # MongoDB bağlantısı için gerekli değişkenler
-      SPRING_DATA_MONGODB_PASSWORD: "password"  # MongoDB bağlantısı için gerekli değişkenler
+      SPRING_DATA_MONGODB_HOST: "document-mongo-db"  # Use the service name as the hostname
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: "medsoft-document"
+      SPRING_DATA_MONGODB_USERNAME: "admin"
+      SPRING_DATA_MONGODB_PASSWORD: "password"
+      SPRING_DATA_MONGODB_URI: "mongodb://admin:password@document-mongo-db:27017/medsoft-document?authSource=admin&authMechanism=SCRAM-SHA-256"
+      SPRING_PROFILES_ACTIVE: "qa"
     ports:
       - "8445:8445"
     depends_on:
@@ -128,7 +132,6 @@ services:
         condition: service_healthy
       document-mongo-db:
         condition: service_healthy
-
     networks:
       - umitcoban
 
@@ -186,6 +189,70 @@ services:
       start_period: 5s
     networks:
       - umitcoban
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=changeme
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    networks:
+      - umitcoban
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    volumes:
+      - ../observability/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - "5000:5000"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=changeme
+    networks:
+      - umitcoban
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVICE_TOKEN=AAEAAWVsYXN0aWMva2liYW5hL2RlZmF1bHQ6bHZ4V25BeGlRd2ltVDVXZHZxOGs0dw
+      - xpack.encryptedSavedObjects.encryptionKey=abcdefghijklmnopqrstuvwxyz123456
+      - xpack.security.encryptionKey=abcdefghijklmnopqrstuvwx123456
+      - xpack.reporting.encryptionKey=zyxwvutsrqponmlkjihgfedcba654321
+      - NODE_OPTIONS=--no-experimental-fetch
+    ports:
+      - "5601:5601"
+    networks:
+      - umitcoban
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - umitcoban
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - umitcoban
+
+
+volumes:
+  esdata1:
+    driver: local
 
 networks:
   umitcoban:

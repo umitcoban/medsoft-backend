@@ -28,7 +28,14 @@ public class ProfilePhotoServiceImpl implements ProfilePhotoService {
     }
 
     @Override
-    public ProfilePhoto findById(String id) {
+    public ProfilePhoto findByUserId(String id) {
         return profilePhotoRepository.findProfilePhotoByUserId(id).orElseThrow();
+    }
+
+    @Override
+    public void deletePhotoByUserId(String userId) {
+        var profilePhoto = findByUserId(userId);
+        profilePhoto.setUserId(null);
+        profilePhotoRepository.save(profilePhoto);
     }
 }

@@ -8,5 +8,6 @@ import java.io.IOException;
 
 public interface ProfilePhotoService {
     String save(MultipartFile file, String userId) throws IOException;
-    ProfilePhoto findById(String id);
+    ProfilePhoto findByUserId(String userId);
+    void deletePhotoByUserId(String userId);
 }

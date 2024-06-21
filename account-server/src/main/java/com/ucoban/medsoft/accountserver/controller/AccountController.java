@@ -11,6 +11,10 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,8 +64,16 @@ public class AccountController {
     }
 
     @GetMapping("/findAllAccount")
-    public ResponseEntity<ApiResponseDto<List<AccountDto>>> getAccounts() {
-        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountMapper.accountListToAccountDtoList(accountService.findAll()), HttpStatus.FOUND.value()));
+    public ResponseEntity<ApiResponseDto<Page<AccountDto>>> getAccountsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        Sort.Direction direction = sort[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Page<AccountDto> accountPage = accountService.findAll(pageable);
+        return ResponseEntity.ok(new ApiResponseDto<>(System.currentTimeMillis(), accountPage, HttpStatus.OK.value()));
     }
 
 }
