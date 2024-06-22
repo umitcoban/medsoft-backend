@@ -29,4 +29,10 @@ public interface IKeyCloakService {
     List<String> getAvailableRoles();
 
     void addNewRole(String Role);
+    
+    void addRoleToUser(String userId, String roleName);
+    
+    void removeRoleFromUser(String userId, String roleName);
+    
+    List<String> getUserRoles(String userId);
 }

@@ -1,9 +1,6 @@
 package com.ucoban.medsoft.accountserver.dao.service;
 
-import com.ucoban.medsoft.accountserver.dto.AccountAnalyticsDto;
-import com.ucoban.medsoft.accountserver.dto.AccountDto;
-import com.ucoban.medsoft.accountserver.dto.RegisterDto;
-import com.ucoban.medsoft.accountserver.dto.UpdateDto;
+import com.ucoban.medsoft.accountserver.dto.*;
 import com.ucoban.medsoft.accountserver.entity.Account;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +16,6 @@ public interface IAccountService {
      Account update(UpdateDto updateDto,String userId);
      AccountAnalyticsDto findAccountsAnalyticsDto();
      Page<AccountDto> findAll(Pageable pageable);
-
      List<AccountDto> findAll(Sort sort);
+     void updateAccountRole(UpdateRoleDto updateRoleDto, String userId);
 }

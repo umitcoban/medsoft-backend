@@ -1,6 +1,5 @@
 version: "3.8"
 services:
-
   config-server:
     container_name: config-server
     image: umitcoban/config-server:1.0.0
@@ -101,12 +100,14 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - "27017:27017"
+    volumes:
+      - document_mongo_db_data:/data/db
     healthcheck:
-      test: "echo 'db.runCommand({ping: 1})' | mongo --quiet"
+      test: "echo 'db.runCommand({ping: 1})' | mongo --username admin --password password --authenticationDatabase admin --quiet"
       interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 15s
+      start_period: 30s
     networks:
       - umitcoban
 
@@ -123,6 +124,8 @@ services:
       SPRING_DATA_MONGODB_PASSWORD: "password"
       SPRING_DATA_MONGODB_URI: "mongodb://admin:password@document-mongo-db:27017/medsoft-document?authSource=admin&authMechanism=SCRAM-SHA-256"
       SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
     ports:
       - "8445:8445"
     depends_on:
@@ -191,6 +194,7 @@ services:
       - umitcoban
 
   elasticsearch:
+    container_name: elasticsearch
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     environment:
       - discovery.type=single-node
@@ -207,6 +211,7 @@ services:
       - umitcoban
 
   logstash:
+    container_name: logstash
     image: docker.elastic.co/logstash/logstash:8.13.4
     volumes:
       - ../observability/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
@@ -220,6 +225,7 @@ services:
       - umitcoban
 
   kibana:
+    container_name: kibana
     image: docker.elastic.co/kibana/kibana:8.13.4
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -234,6 +240,7 @@ services:
       - umitcoban
 
   prometheus:
+    container_name: prometheus
     image: prom/prometheus
     volumes:
       - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -243,6 +250,7 @@ services:
       - umitcoban
 
   grafana:
+    container_name: grafana
     image: grafana/grafana
     ports:
       - "3000:3000"
@@ -252,6 +260,8 @@ services:
 
 volumes:
   esdata1:
+    driver: local
+  document_mongo_db_data:
     driver: local
 
 networks:

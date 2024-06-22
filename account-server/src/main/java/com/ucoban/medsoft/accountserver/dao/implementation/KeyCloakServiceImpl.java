@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,8 +58,7 @@ public class KeyCloakServiceImpl implements IKeyCloakService {
         }
         return response;
     }
-
-
+    
     @Override
     public void resetUserPassword(UserResource userResource, CredentialRepresentation credentialRepresentation) {
         userResource.resetPassword(credentialRepresentation);
@@ -106,5 +106,27 @@ public class KeyCloakServiceImpl implements IKeyCloakService {
                     .roles()
                     .create(roleRep);
         }
+    }
+    
+    @Override
+    public void addRoleToUser(String userId, String roleName) {
+        RealmResource realmResource = keycloak.realm(realm);
+        UserRepresentation user = realmResource.users().get(userId).toRepresentation();
+        RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation();
+        realmResource.users().get(userId).roles().realmLevel().add(Collections.singletonList(role));
+    }
+    @Override
+    public void removeRoleFromUser(String userId, String roleName) {
+        RealmResource realmResource = keycloak.realm(realm);
+        UserRepresentation user = realmResource.users().get(userId).toRepresentation();
+        RoleRepresentation role = realmResource.roles().get(roleName).toRepresentation();
+        realmResource.users().get(userId).roles().realmLevel().remove(Collections.singletonList(role));
+    }
+    @Override
+    public List<String> getUserRoles(String userId) {
+        RealmResource realmResource = keycloak.realm(realm);
+        return realmResource.users().get(userId).roles().realmLevel().listAll().stream()
+                .map(RoleRepresentation::getName)
+                .collect(Collectors.toList());
     }
 }

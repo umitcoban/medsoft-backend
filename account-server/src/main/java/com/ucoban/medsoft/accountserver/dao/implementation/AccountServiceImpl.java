@@ -3,15 +3,13 @@ package com.ucoban.medsoft.accountserver.dao.implementation;
 import com.ucoban.medsoft.accountserver.dao.client.IDocumentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
 import com.ucoban.medsoft.accountserver.dao.service.IKeyCloakService;
-import com.ucoban.medsoft.accountserver.dto.AccountAnalyticsDto;
-import com.ucoban.medsoft.accountserver.dto.AccountDto;
-import com.ucoban.medsoft.accountserver.dto.RegisterDto;
-import com.ucoban.medsoft.accountserver.dto.UpdateDto;
+import com.ucoban.medsoft.accountserver.dto.*;
 import com.ucoban.medsoft.accountserver.entity.Account;
 import com.ucoban.medsoft.accountserver.entity.ERole;
 import com.ucoban.medsoft.accountserver.entity.Role;
 import com.ucoban.medsoft.accountserver.mapper.IAccountMapper;
 import com.ucoban.medsoft.accountserver.repository.IAccountRepository;
+import com.ucoban.medsoft.accountserver.repository.IRoleRepository;
 import jakarta.transaction.Transactional;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -27,6 +25,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service("accountServiceImpl")
 public class AccountServiceImpl implements IAccountService {
@@ -39,6 +38,8 @@ public class AccountServiceImpl implements IAccountService {
     private final IKeyCloakService keyCloakService;
 
     private final IAccountMapper accountMapper;
+    
+    private final IRoleRepository roleRepository;
 
     private final Logger logger = LoggerFactory.getLogger(AccountServiceImpl.class);
 
@@ -46,11 +47,12 @@ public class AccountServiceImpl implements IAccountService {
     public AccountServiceImpl(
             IAccountRepository accountRepository,
             @Qualifier("keyCloakServiceImpl") IKeyCloakService keyCloakService,
-            IAccountMapper accountMapper, IDocumentFeignClient iDocumentFeignClient) {
+            IAccountMapper accountMapper, IDocumentFeignClient iDocumentFeignClient, IRoleRepository roleRepository) {
         this.accountRepository = accountRepository;
         this.keyCloakService = keyCloakService;
         this.accountMapper = accountMapper;
         this.iDocumentFeignClient = iDocumentFeignClient;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -68,9 +70,8 @@ public class AccountServiceImpl implements IAccountService {
     @Override
     public void create(RegisterDto registerDto) {
         var account = accountMapper.registerDtoToAccount(registerDto);
-        var defaultRoles = new HashSet<Role>();
-        defaultRoles.add(new Role(ERole.USER));
-        account.setRoles(defaultRoles);
+        var roles = roleRepository.findAll();
+        account.setRoles(roles.stream().filter(role -> role.getRole() == ERole.USER).collect(Collectors.toSet()));
         keyCloakService.addNewRole(ERole.USER.name());
         account.setId(createAndKeyCloakGetUserId(registerDto));
         accountRepository.save(account);
@@ -143,5 +144,31 @@ public class AccountServiceImpl implements IAccountService {
     @Override
     public List<AccountDto> findAll(Sort sort) {
         return List.of();
+    }
+    
+    @Transactional
+    @Override
+    public void updateAccountRole(UpdateRoleDto updateRoleDto, String userId) {
+        var roles = roleRepository.findAll().stream()
+                .filter(role -> Arrays.stream(updateRoleDto.ids()).anyMatch(val -> role.getId() == val))
+                .collect(Collectors.toSet());
+        var account = findById(userId);
+
+        List<String> existingRoles = keyCloakService.getUserRoles(userId);
+
+        roles.forEach(role -> {
+            if (!existingRoles.contains(role.getRole().name())) {
+                keyCloakService.addRoleToUser(userId, role.getRole().name());
+            }
+        });
+
+        existingRoles.forEach(existingRole -> {
+            if (roles.stream().noneMatch(role -> role.getRole().name().equals(existingRole))) {
+                keyCloakService.removeRoleFromUser(userId, existingRole);
+            }
+        });
+
+        account.setRoles(roles);
+        accountRepository.save(account);
     }
 }

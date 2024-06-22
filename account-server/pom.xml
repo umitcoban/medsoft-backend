@@ -102,7 +102,6 @@
             <artifactId>keycloak-admin-client</artifactId>
             <version>24.0.0</version>
         </dependency>
-
     </dependencies>
     <dependencyManagement>
         <dependencies>

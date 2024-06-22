@@ -2,10 +2,7 @@ package com.ucoban.medsoft.accountserver.controller;
 
 import com.ucoban.medsoft.accountserver.dao.client.IDocumentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
-import com.ucoban.medsoft.accountserver.dto.AccountDto;
-import com.ucoban.medsoft.accountserver.dto.ApiResponseDto;
-import com.ucoban.medsoft.accountserver.dto.RegisterDto;
-import com.ucoban.medsoft.accountserver.dto.UpdateDto;
+import com.ucoban.medsoft.accountserver.dto.*;
 import com.ucoban.medsoft.accountserver.mapper.IAccountMapper;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -55,14 +52,35 @@ public class AccountController {
         return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountMapper.accountDtoToAccount(accountService.update(updateDto, userId), documentFeignClient), HttpStatus.CREATED.value()));
     }
 
-    @GetMapping("/findAccountById")
+    @GetMapping("/myAccount")
     public ResponseEntity<ApiResponseDto<AccountDto>> getAccount(@RequestHeader() HttpHeaders headers) {
         var userId = headers.getFirst("user-id");
         logger.info("userID: {}", userId);;
         var accountDto = accountMapper.accountDtoToAccount(accountService.findById(userId), documentFeignClient);
         return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountDto , HttpStatus.FOUND.value()));
     }
-
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<AccountDto>> getAccountById(@RequestHeader() HttpHeaders headers, @PathVariable("id") String id) {
+        var userId = headers.getFirst("user-id");
+        logger.info("request userID: {}, id: {}", userId, id);
+        var accountDto = accountMapper.accountDtoToAccount(accountService.findById(id), documentFeignClient);
+        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountDto , HttpStatus.FOUND.value()));
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponseDto<AccountDto>> updateAccountWithId(@Valid @RequestBody UpdateDto updateDto, @RequestHeader() HttpHeaders headers, @PathVariable("id") String id){
+        var userId = headers.getFirst("user-id");
+        logger.info("request userID: {} id: {}", userId, id);
+        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountMapper.accountDtoToAccount(accountService.update(updateDto, id), documentFeignClient), HttpStatus.CREATED.value()));
+    }
+    
+    @PostMapping("/{id}/updateRole")
+    public ResponseEntity<ApiResponseDto<Boolean>> updateAccountRole(@Valid @RequestBody UpdateRoleDto updateRoleDto, @PathVariable("id") String id){
+        accountService.updateAccountRole(updateRoleDto, id);
+        return ResponseEntity.ok(new ApiResponseDto<>(System.currentTimeMillis(), true, HttpStatus.OK.value()));
+    }
+    
     @GetMapping("/findAllAccount")
     public ResponseEntity<ApiResponseDto<Page<AccountDto>>> getAccountsPaginated(
             @RequestParam(defaultValue = "0") int page,

@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
+import java.util.List;
+
 
 @Mapper(implementationName = "RoleMapperImpl", componentModel = "spring")
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -14,5 +16,5 @@ public interface IRoleMapper {
 
     @RoleToDto
     RoleDto roleToDto(Role role);
-
+    List<RoleDto> rolesToDtos(List<Role> roles);
 }
