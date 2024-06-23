@@ -18,4 +18,5 @@ public interface IAccountService {
      Page<AccountDto> findAll(Pageable pageable);
      List<AccountDto> findAll(Sort sort);
      void updateAccountRole(UpdateRoleDto updateRoleDto, String userId);
+     boolean changePassword(String userId, String newPassword);
 }

@@ -129,4 +129,14 @@ public class KeyCloakServiceImpl implements IKeyCloakService {
                 .map(RoleRepresentation::getName)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    public void changePassword(String userId, String newPassword) {
+        UserResource userResource = keycloak.realm(realm).users().get(userId);
+        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+        credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
+        credentialRepresentation.setValue(newPassword);
+        credentialRepresentation.setTemporary(false);
+        userResource.resetPassword(credentialRepresentation);
+    }
 }

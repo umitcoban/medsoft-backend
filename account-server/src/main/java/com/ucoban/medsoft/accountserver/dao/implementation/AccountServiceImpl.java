@@ -153,6 +153,8 @@ public class AccountServiceImpl implements IAccountService {
                 .filter(role -> Arrays.stream(updateRoleDto.ids()).anyMatch(val -> role.getId() == val))
                 .collect(Collectors.toSet());
         var account = findById(userId);
+        
+        roles.forEach(role -> keyCloakService.addNewRole(role.getRole().name()));
 
         List<String> existingRoles = keyCloakService.getUserRoles(userId);
 
@@ -170,5 +172,12 @@ public class AccountServiceImpl implements IAccountService {
 
         account.setRoles(roles);
         accountRepository.save(account);
+    }
+    
+    @Override
+    public boolean changePassword(String userId, String newPassword) {
+        var account = findById(userId);
+        keyCloakService.changePassword(account.getId(), newPassword);
+        return true;
     }
 }

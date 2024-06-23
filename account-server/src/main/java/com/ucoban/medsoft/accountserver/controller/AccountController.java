@@ -5,6 +5,7 @@ import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
 import com.ucoban.medsoft.accountserver.dto.*;
 import com.ucoban.medsoft.accountserver.mapper.IAccountMapper;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -79,6 +80,12 @@ public class AccountController {
     public ResponseEntity<ApiResponseDto<Boolean>> updateAccountRole(@Valid @RequestBody UpdateRoleDto updateRoleDto, @PathVariable("id") String id){
         accountService.updateAccountRole(updateRoleDto, id);
         return ResponseEntity.ok(new ApiResponseDto<>(System.currentTimeMillis(), true, HttpStatus.OK.value()));
+    }
+    
+    @PostMapping("/{id}/changePassword")
+    public ResponseEntity<ApiResponseDto<Boolean>> updateAccountRole(@Valid @NotBlank @RequestBody PasswordDto passwordDto, @PathVariable("id") String id){
+        logger.info("request userID: {} password: {}", id, passwordDto.password());
+        return ResponseEntity.ok(new ApiResponseDto<>(System.currentTimeMillis(), accountService.changePassword(id, passwordDto.password()), HttpStatus.OK.value()));
     }
     
     @GetMapping("/findAllAccount")

@@ -72,9 +72,9 @@ logging:
 
 keycloak-admin:
   server-url: "http://localhost:7080"
-  realm: "master"
+  realm: "medsoft"
   client-id: "medsoft-account-ms"
-  client-secret: "jgN04IAR9dpWhkNzDhn0eriSFRjzL1na"
+  client-secret: "mGaGdPLzuBGcMRKifVXEBKuosNz5FR8z"
   admin-user: "admin"
   admin-password: "admin"
 

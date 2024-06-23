@@ -35,4 +35,6 @@ public interface IKeyCloakService {
     void removeRoleFromUser(String userId, String roleName);
     
     List<String> getUserRoles(String userId);
+    
+    void changePassword(String userId, String newPassword);
 }

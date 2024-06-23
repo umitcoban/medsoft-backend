@@ -3,7 +3,7 @@
 
 ### DB DATA ###
 /docker-compose/default/account_db/
-/docker-compose/default/postgres/
+/docker-compose/default/postgres_keycloak/
 
 
 ### STS ###
