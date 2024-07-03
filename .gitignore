@@ -1,6 +1,11 @@
 /target/
 !.mvn/wrapper/maven-wrapper.jar
 
+### DB DATA ###
+/docker-compose/default/account_db/
+/docker-compose/default/postgres_keycloak/
+
+
 ### STS ###
 .apt_generated
 .classpath
@@ -199,3 +204,7 @@ README.html
 *.iml
 .idea
 .exercism
+/docker-compose/default/appointment_db/
+/docker-compose/default/department_db/
+/docker-compose/default/appointment_db/data/
+/docker-compose/default/department_db/data/

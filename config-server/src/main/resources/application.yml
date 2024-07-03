@@ -9,7 +9,7 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/umitcoban/medsoft-config.git
+          uri: https://github.com/umitcoban/medsoft-config
           force-pull: true
           skipSslValidation: true
           default-label: main
@@ -68,9 +68,9 @@ endpoints:
 
 logging:
   level:
-    com:
-      umitcoban:
-        configserver: DEBUG
+    com.umitcoban.medsoft.configserver: DEBUG
+    org.springframework.cloud.config: DEBUG
+
   pattern:
     level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
 

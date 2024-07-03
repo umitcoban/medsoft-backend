@@ -1,0 +1,70 @@
+server:
+  port: 8445
+
+spring:
+  application:
+    name: "documentms"
+  profiles:
+    active: qa
+  data:
+    mongodb:
+      host: "localhost"
+      port: 27017
+      database: "medsoft-document"
+      username: "admin"  # Eklenen satır
+      password: "password"  # Eklenen satır
+      uri: mongodb://admin:password@localhost:27017/medsoft-document?authSource=admin&authMechanism=SCRAM-SHA-256
+  servlet:
+    multipart:
+      max-file-size: "256MB"
+      max-request-size: "256MB"
+      enabled: true
+  config:
+    import: "optional:configserver:http://localhost:8763/"
+  cloud:
+    inetutils:
+      timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    fetchRegistry: true
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+info:
+  app:
+    name: "documentms"
+    description: "MedSoft Document Application"
+    version: "1.0.0"
+
+logging:
+  level:
+    com:
+      ucoban:
+        medsoft:
+          documentserver: DEBUG
+  pattern:
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"

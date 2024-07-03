@@ -1,6 +1,5 @@
 version: "3.8"
 services:
-
   config-server:
     container_name: config-server
     image: umitcoban/config-server:1.0.0
@@ -39,6 +38,7 @@ services:
     image: umitcoban/gateway-server:1.0.0
     environment:
       SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_PROFILES_ACTIVE: "qa"
     ports:
       - "8765:8765"
     depends_on:
@@ -75,7 +75,10 @@ services:
       SPRING_DATASOURCE_URL: "jdbc:postgresql://account-db:5432/account_db"
       SPRING_DATASOURCE_USERNAME: "account"
       SPRING_DATASOURCE_PASSWORD: "account"
-      SPRING_RABBITMQ_HOST: "rabbit"
+      SPRING_RABBITMQ_HOST: "rabbitmq"
+      SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
     ports:
       - "8440:8440"
     depends_on:
@@ -84,6 +87,138 @@ services:
       config-server:
         condition: service_healthy
       account-db:
+        condition: service_healthy
+    networks:
+      - umitcoban
+
+
+  appointment-db:
+    container_name: appointment-db
+    image: postgres:16.0
+    restart: unless-stopped
+    ports:
+      - "5455:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "appointment_db" ]
+    environment:
+      POSTGRES_DB: "appointment_db"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_ROOT_PASSWORD: "admin"
+    volumes:
+      - ./appointment_db/data:/var/lib/postgresql/data
+    networks:
+      - umitcoban
+
+  appointment-server:
+    container_name: appointment-server
+    image: umitcoban/appointment-server:1.0.0
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://appointment-db:5432/appointment_db"
+      SPRING_DATASOURCE_USERNAME: "admin"
+      SPRING_DATASOURCE_PASSWORD: "admin"
+      SPRING_RABBITMQ_HOST: "rabbitmq"
+      SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
+    ports:
+      - "8450:8450"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      appointment-db:
+        condition: service_healthy
+    networks:
+      - umitcoban
+
+  department-db:
+    container_name: department-db
+    image: postgres:16.0
+    restart: unless-stopped
+    ports:
+      - "5465:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "department_db" ]
+    environment:
+      POSTGRES_DB: "department_db"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_ROOT_PASSWORD: "admin"
+    volumes:
+      - ./department_db/data:/var/lib/postgresql/data
+    networks:
+      - umitcoban
+
+  department-server:
+    container_name: department-server
+    image: umitcoban/department-server:1.0.0
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://department-db:5432/department_db"
+      SPRING_DATASOURCE_USERNAME: "admin"
+      SPRING_DATASOURCE_PASSWORD: "admin"
+      SPRING_RABBITMQ_HOST: "rabbitmq"
+      SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
+    ports:
+      - "8460:8460"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      department-db:
+        condition: service_healthy
+    networks:
+      - umitcoban
+
+  document-mongo-db:
+    container_name: document-db
+    image: mongo:8.0.0-rc4
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - document_mongo_db_data:/data/db
+    healthcheck:
+      test: "echo 'db.runCommand({ping: 1})' | mongo --username admin --password password --authenticationDatabase admin --quiet"
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - umitcoban
+
+  document-server:
+    container_name: document-server
+    image: umitcoban/document-server:1.0.0
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_RABBITMQ_HOST: "rabbit"
+      SPRING_DATA_MONGODB_HOST: "document-mongo-db"  # Use the service name as the hostname
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: "medsoft-document"
+      SPRING_DATA_MONGODB_USERNAME: "admin"
+      SPRING_DATA_MONGODB_PASSWORD: "password"
+      SPRING_DATA_MONGODB_URI: "mongodb://admin:password@document-mongo-db:27017/medsoft-document?authSource=admin&authMechanism=SCRAM-SHA-256"
+      SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
+    ports:
+      - "8445:8445"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      document-mongo-db:
         condition: service_healthy
     networks:
       - umitcoban
@@ -102,7 +237,7 @@ services:
       POSTGRES_PASSWORD: "keycloak"
       POSTGRES_ROOT_PASSWORD: "keycloak"
     volumes:
-      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres_keycloak/data:/var/lib/postgresql/data
     networks:
       - umitcoban
 
@@ -142,6 +277,77 @@ services:
       start_period: 5s
     networks:
       - umitcoban
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=changeme
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    networks:
+      - umitcoban
+
+  logstash:
+    container_name: logstash
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    volumes:
+      - ../observability/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - "5000:5000"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=changeme
+    networks:
+      - umitcoban
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_SERVICE_TOKEN=AAEAAWVsYXN0aWMva2liYW5hL2RlZmF1bHQ6bHZ4V25BeGlRd2ltVDVXZHZxOGs0dw
+      - xpack.encryptedSavedObjects.encryptionKey=abcdefghijklmnopqrstuvwxyz123456
+      - xpack.security.encryptionKey=abcdefghijklmnopqrstuvwx123456
+      - xpack.reporting.encryptionKey=zyxwvutsrqponmlkjihgfedcba654321
+      - NODE_OPTIONS=--no-experimental-fetch
+    ports:
+      - "5601:5601"
+    networks:
+      - umitcoban
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - umitcoban
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - umitcoban
+
+
+volumes:
+  esdata1:
+    driver: local
+  document_mongo_db_data:
+    driver: local
 
 networks:
   umitcoban:

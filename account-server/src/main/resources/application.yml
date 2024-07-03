@@ -24,6 +24,7 @@ spring:
     username: guest
     password: guest
     connection-timeout: 10s
+
 management:
   endpoints:
     web:
@@ -35,17 +36,16 @@ management:
     liveness-state:
       enabled: true
   endpoint:
-    shutdown:
-      enabled: true
-    health:
-      probes:
-        enabled: true
-  info:
-    env:
+    prometheus:
       enabled: true
   metrics:
+    export:
+      prometheus:
+        enabled: true
     tags:
       application: ${spring.application.name}
+
+
 eureka:
   instance:
     preferIpAddress: true
@@ -69,4 +69,12 @@ logging:
           accountserver: DEBUG
   pattern:
     level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+
+keycloak-admin:
+  server-url: "http://localhost:7080"
+  realm: "medsoft"
+  client-id: "medsoft-account-ms"
+  client-secret: "mGaGdPLzuBGcMRKifVXEBKuosNz5FR8z"
+  admin-user: "admin"
+  admin-password: "admin"
 
