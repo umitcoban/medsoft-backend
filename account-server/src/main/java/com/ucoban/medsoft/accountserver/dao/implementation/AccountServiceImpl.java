@@ -1,5 +1,6 @@
 package com.ucoban.medsoft.accountserver.dao.implementation;
 
+import com.ucoban.medsoft.accountserver.dao.client.IDepartmentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.client.IDocumentFeignClient;
 import com.ucoban.medsoft.accountserver.dao.service.IAccountService;
 import com.ucoban.medsoft.accountserver.dao.service.IKeyCloakService;
@@ -10,6 +11,7 @@ import com.ucoban.medsoft.accountserver.entity.Role;
 import com.ucoban.medsoft.accountserver.mapper.IAccountMapper;
 import com.ucoban.medsoft.accountserver.repository.IAccountRepository;
 import com.ucoban.medsoft.accountserver.repository.IRoleRepository;
+import com.ucoban.medsoft.accountserver.util.AccountMapperHelper;
 import jakarta.transaction.Transactional;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -29,7 +32,6 @@ import java.util.stream.Collectors;
 
 @Service("accountServiceImpl")
 public class AccountServiceImpl implements IAccountService {
-    private final IDocumentFeignClient iDocumentFeignClient;
     @Value("${keycloak-admin.client-id}")
     private String clientId;
 
@@ -41,20 +43,27 @@ public class AccountServiceImpl implements IAccountService {
     
     private final IRoleRepository roleRepository;
 
+    private final IDepartmentFeignClient departmentFeignClient;
+    
+    private final AccountMapperHelper accountMapperHelper;
+    
     private final Logger logger = LoggerFactory.getLogger(AccountServiceImpl.class);
-
+    
     @Autowired
     public AccountServiceImpl(
             IAccountRepository accountRepository,
             @Qualifier("keyCloakServiceImpl") IKeyCloakService keyCloakService,
-            IAccountMapper accountMapper, IDocumentFeignClient iDocumentFeignClient, IRoleRepository roleRepository) {
+            IAccountMapper accountMapper, IDepartmentFeignClient departmentFeignClient,
+            IRoleRepository roleRepository,
+            AccountMapperHelper accountMapperHelper) {
         this.accountRepository = accountRepository;
         this.keyCloakService = keyCloakService;
         this.accountMapper = accountMapper;
-        this.iDocumentFeignClient = iDocumentFeignClient;
         this.roleRepository = roleRepository;
+        this.departmentFeignClient = departmentFeignClient;
+        this.accountMapperHelper = accountMapperHelper;
     }
-
+    
     @Override
     public Account findById(String id) {
         var account = accountRepository.findById(id);
@@ -138,7 +147,7 @@ public class AccountServiceImpl implements IAccountService {
     @Override
     public Page<AccountDto> findAll(Pageable pageable) {
         Page<Account> accounts = accountRepository.findAll(pageable);
-        return accounts.map(acc -> accountMapper.accountDtoToAccount(acc, iDocumentFeignClient));
+        return accounts.map(acc -> accountMapper.accountDtoToAccount(acc, accountMapperHelper));
     }
 
     @Override
@@ -179,5 +188,12 @@ public class AccountServiceImpl implements IAccountService {
         var account = findById(userId);
         keyCloakService.changePassword(account.getId(), newPassword);
         return true;
+    }
+    
+    @Override
+    public boolean assignDepartment(AssignDepartmentDto assignDepartmentDto) {
+        var account = findById(assignDepartmentDto.userId());
+        var result = departmentFeignClient.assignNewDepartment(new AssignDepartmentDto(assignDepartmentDto.departmentId(), account.getId()));
+        return result.getStatusCode() == HttpStatus.OK;
     }
 }

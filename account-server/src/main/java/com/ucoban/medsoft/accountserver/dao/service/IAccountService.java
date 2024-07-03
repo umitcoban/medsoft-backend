@@ -5,9 +5,11 @@ import com.ucoban.medsoft.accountserver.entity.Account;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public interface IAccountService {
      Account findById(String id);
      List<Account> findAll();
@@ -19,4 +21,5 @@ public interface IAccountService {
      List<AccountDto> findAll(Sort sort);
      void updateAccountRole(UpdateRoleDto updateRoleDto, String userId);
      boolean changePassword(String userId, String newPassword);
+     boolean assignDepartment(AssignDepartmentDto assignDepartmentDto);
 }

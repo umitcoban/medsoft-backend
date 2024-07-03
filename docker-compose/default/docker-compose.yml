@@ -91,6 +91,91 @@ services:
     networks:
       - umitcoban
 
+
+  appointment-db:
+    container_name: appointment-db
+    image: postgres:16.0
+    restart: unless-stopped
+    ports:
+      - "5455:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "appointment_db" ]
+    environment:
+      POSTGRES_DB: "appointment_db"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_ROOT_PASSWORD: "admin"
+    volumes:
+      - ./appointment_db/data:/var/lib/postgresql/data
+    networks:
+      - umitcoban
+
+  appointment-server:
+    container_name: appointment-server
+    image: umitcoban/appointment-server:1.0.0
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://appointment-db:5432/appointment_db"
+      SPRING_DATASOURCE_USERNAME: "admin"
+      SPRING_DATASOURCE_PASSWORD: "admin"
+      SPRING_RABBITMQ_HOST: "rabbitmq"
+      SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
+    ports:
+      - "8450:8450"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      appointment-db:
+        condition: service_healthy
+    networks:
+      - umitcoban
+
+  department-db:
+    container_name: department-db
+    image: postgres:16.0
+    restart: unless-stopped
+    ports:
+      - "5465:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "department_db" ]
+    environment:
+      POSTGRES_DB: "department_db"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "admin"
+      POSTGRES_ROOT_PASSWORD: "admin"
+    volumes:
+      - ./department_db/data:/var/lib/postgresql/data
+    networks:
+      - umitcoban
+
+  department-server:
+    container_name: department-server
+    image: umitcoban/department-server:1.0.0
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8763"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://department-db:5432/department_db"
+      SPRING_DATASOURCE_USERNAME: "admin"
+      SPRING_DATASOURCE_PASSWORD: "admin"
+      SPRING_RABBITMQ_HOST: "rabbitmq"
+      SPRING_PROFILES_ACTIVE: "qa"
+      LOGSTASH_HOST: "logstash"
+      LOGSTASH_PORT: 5000
+    ports:
+      - "8460:8460"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      department-db:
+        condition: service_healthy
+    networks:
+      - umitcoban
+
   document-mongo-db:
     container_name: document-db
     image: mongo:8.0.0-rc4

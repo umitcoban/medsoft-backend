@@ -204,3 +204,7 @@ README.html
 *.iml
 .idea
 .exercism
+/docker-compose/default/appointment_db/
+/docker-compose/default/department_db/
+/docker-compose/default/appointment_db/data/
+/docker-compose/default/department_db/data/
