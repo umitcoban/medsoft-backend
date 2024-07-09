@@ -41,7 +41,15 @@ public class AccountController {
         this.accountMapper = accountMapper;
         this.accountMapperHelper = accountMapperHelper;
     }
-
+    
+    @GetMapping
+    public ResponseEntity<ApiResponseDto<List<AccountDto>>> getAllAccounts(@RequestHeader() HttpHeaders headers) {
+        var userId = headers.getFirst("user-id");
+        logger.info("userID: {}", userId);;
+        var accountDto = accountMapper.accountListToAccountDtoList(accountService.findAll());
+        return ResponseEntity.accepted().body(new ApiResponseDto<>(System.currentTimeMillis(), accountDto , HttpStatus.FOUND.value()));
+    }
+    
     @PostMapping()
     public ResponseEntity<ApiResponseDto<String>> createNewAccount(@Valid @RequestBody RegisterDto registerDto){
         accountService.create(registerDto);

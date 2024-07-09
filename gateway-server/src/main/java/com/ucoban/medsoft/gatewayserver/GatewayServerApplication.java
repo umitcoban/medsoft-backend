@@ -35,6 +35,9 @@ public class GatewayServerApplication {
                 .route(p -> p.path("/medsoft/departments/**")
                         .filters(f -> f.rewritePath("/medsoft/departments/(?<segment>.*)", "/${segment}"))
                         .uri("lb://DEPARTMENTMS"))
+                .route(p -> p.path("/medsoft/appointments/**")
+                        .filters(f -> f.rewritePath("/medsoft/appointments/(?<segment>.*)", "/${segment}"))
+                        .uri("lb://APPOINTMENTMS"))
                 .build();
     }
 

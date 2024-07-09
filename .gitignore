@@ -5,7 +5,6 @@
 /docker-compose/default/account_db/
 /docker-compose/default/postgres_keycloak/
 
-
 ### STS ###
 .apt_generated
 .classpath
@@ -206,5 +205,3 @@ README.html
 .exercism
 /docker-compose/default/appointment_db/
 /docker-compose/default/department_db/
-/docker-compose/default/appointment_db/data/
-/docker-compose/default/department_db/data/
